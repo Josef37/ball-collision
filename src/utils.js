@@ -9,11 +9,14 @@ export function iteratePairs(array, callback) {
     }
 }
 
-export const intersects = (rectA, rectB) => {
-    return !(
-        rectA.x + rectA.width < rectB.x ||
-        rectB.x + rectB.width < rectA.x ||
-        rectA.y + rectA.height < rectB.y ||
-        rectB.y + rectB.height < rectA.y
-    );
-};
+// Rotate (x,y) counter-clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
+export const rotateCounterClockwise = (x, y, sin, cos) => ({
+    x: x * cos - y * sin,
+    y: y * cos + x * sin
+});
+
+// Rotate (x,y) clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
+export const rotateClockwise = (x, y, sin, cos) => ({
+    x: x * cos + y * sin,
+    y: y * cos - x * sin
+});

@@ -1,5 +1,5 @@
 import "./styles.css";
-import { iteratePairs } from "./utils"
+import { iteratePairs, rotateCounterClockwise, rotateClockwise } from "./utils"
 import { updateChart } from "./chart";
 
 class Ball {
@@ -80,19 +80,15 @@ const collideWall = (ball) => {
     }
 };
 
-// Rotate (x,y) counter-clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
-const rotateCounterClockwise = (x, y, sin, cos) => ({
-    x: x * cos - y * sin,
-    y: y * cos + x * sin
-});
-
-// Rotate (x,y) clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
-const rotateClockwise = (x, y, sin, cos) => ({
-    x: x * cos + y * sin,
-    y: y * cos - x * sin
-});
-
 const collideTwoBalls = (ball0, ball1, dt) => {
+    // 1. Rewind to moment of collision
+
+    // 2. Collide 
+
+    // 3. Fast-forward to actual time
+
+    // (4. Calculate intersections once again?)
+
     if (isNoCollision(ball0, ball1)) return
 
     const { dx, dy } = getDistanceVector(ball0, ball1);
@@ -160,7 +156,7 @@ function isNoCollision(ball0, ball1) {
     return distanceSquared > collisionDistanceSquared;
 }
 
-function getDistanceVector(ball0, ball1) {
+export function getDistanceVector(ball0, ball1) {
     return {
         dx: ball1.x - ball0.x,
         dy: ball1.y - ball0.y
@@ -224,7 +220,7 @@ function init() {
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
 
-    const numberOfBalls = 36
+    const numberOfBalls = 20
     const balls = new Array(numberOfBalls).fill(null).map(
         () => new Ball({
             x: Math.random() * window.innerWidth,
