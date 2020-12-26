@@ -1,5 +1,6 @@
 import "./styles.css";
 import { iteratePairs } from "./utils"
+import { updateChart } from "./chart";
 
 class Ball {
     constructor({ x, y, vx, vy, radius, color = "red" }) {
@@ -17,12 +18,6 @@ class Ball {
         ctx.fillStyle = this.color;
         ctx.strokeStyle = this.color;
         ctx.translate(this.x, this.y);
-        ctx.strokeRect(
-            -this.radius,
-            -this.radius,
-            this.radius * 2,
-            this.radius * 2
-        );
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, Math.PI * 2, false);
         ctx.closePath();
@@ -46,30 +41,34 @@ class Ball {
         this.x += x
         this.y += y
     }
+    get kineticEnergy() {
+        return 1 / 2 * this.mass * this.velocity
+    }
+    get velocity() {
+        return Math.sqrt(this.vx ** 2 + this.vy ** 2)
+    }
 }
 
 // Reset the balls position to inside the canvas
 // and multiply the wallwards velocity with factor.
 const collideWall = (ball) => {
-    const wallBounceFactor = 0.5
-    const floorBounceFactor = 0.5;
-    const ceilingBounceFactor = 1;
+    const bounceFactor = 1
 
     if (ball.x + ball.radius > canvas.width) {
         ball.x = canvas.width - ball.radius;
-        ball.vx *= -wallBounceFactor;
+        ball.vx *= -bounceFactor;
     }
     if (ball.x - ball.radius < 0) {
         ball.x = ball.radius;
-        ball.vx *= -wallBounceFactor;
+        ball.vx *= -bounceFactor;
     }
     if (ball.y + ball.radius > canvas.height) {
         ball.y = canvas.height - ball.radius;
-        ball.vy *= -floorBounceFactor;
+        ball.vy *= -bounceFactor;
     }
     if (ball.y - ball.radius < 0) {
         ball.y = ball.radius;
-        ball.vy *= -ceilingBounceFactor;
+        ball.vy *= -bounceFactor;
     }
 };
 
@@ -138,10 +137,9 @@ const collideTwoBalls = (ball0, ball1, dt) => {
 
 function isNoCollision(ball0, ball1) {
     const { dx, dy } = getDistanceVector(ball0, ball1);
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const collisionDistance = ball0.radius + ball1.radius;
-
-    return distance > collisionDistance;
+    const distanceSquared = dx * dx + dy * dy;
+    const collisionDistanceSquared = (ball0.radius + ball1.radius) ** 2;
+    return distanceSquared > collisionDistanceSquared;
 }
 
 function getDistanceVector(ball0, ball1) {
@@ -159,6 +157,8 @@ function updateFrame(ts) {
     collideBalls();
     renderBalls();
 
+    updateEnergyChart();
+
     requestAnimationFrame(updateFrame);
 
     function updateTimestep() {
@@ -174,7 +174,7 @@ function updateFrame(ts) {
     function moveBalls() {
         for (const ball of balls) {
             // ADD GRAVITY HERE
-            ball.vy += 0.01;
+            // ball.vy += 0.01;
             ball.move(dt);
             collideWall(ball);
         }
@@ -189,6 +189,11 @@ function updateFrame(ts) {
             ball.render(ctx);
         }
     }
+
+    function updateEnergyChart() {
+        const energy = balls.reduce((energy, ball) => energy + ball.kineticEnergy, 0)
+        updateChart({ x: ts, y: energy })
+    }
 }
 
 function init() {
@@ -201,7 +206,8 @@ function init() {
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
 
-    const balls = new Array(36).fill(null).map(
+    const numberOfBalls = 36
+    const balls = new Array(numberOfBalls).fill(null).map(
         () => new Ball({
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
