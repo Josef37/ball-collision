@@ -12,11 +12,9 @@ const collideTwoBalls = (ball0, ball1, dt) => {
 
     // (4. Calculate intersections once again?)
 
-    if (isNoCollision(ball0, ball1)) return
+    if (!ball0.isColliding(ball1)) return
 
-    const { dx, dy } = getDistanceVector(ball0, ball1);
-
-
+    const { dx, dy } = ball0.getVectorTo(ball1);
 
     // calculate angle, sine, and cosine
     const angle = Math.atan2(dy, dx);
@@ -71,20 +69,6 @@ const collideTwoBalls = (ball0, ball1, dt) => {
         vy: vel1F.y
     })
 };
-
-function isNoCollision(ball0, ball1) {
-    const { dx, dy } = getDistanceVector(ball0, ball1);
-    const distanceSquared = dx * dx + dy * dy;
-    const collisionDistanceSquared = (ball0.radius + ball1.radius) ** 2;
-    return distanceSquared > collisionDistanceSquared;
-}
-
-export function getDistanceVector(ball0, ball1) {
-    return {
-        dx: ball1.x - ball0.x,
-        dy: ball1.y - ball0.y
-    }
-}
 
 function updateFrame(ts) {
     const dt = updateTimestep();

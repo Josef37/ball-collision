@@ -124,6 +124,34 @@ describe("Ball", () => {
         })
     })
 
+    describe("isColliding", () => {
+        it("collides with itself", () => {
+            expect(ball.isColliding(ball)).to.be.true
+        })
+
+        it("does not collide outside radius", () => {
+            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
+            const ball2 = constructBallAt({ x: 3, y: 0, radius: 1 })
+            expect(ball1.isColliding(ball2)).to.be.false
+        })
+
+        it("does collide when touching slightly", () => {
+            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
+            const ball2 = constructBallAt({ x: 1.999, y: 0, radius: 1 })
+            expect(ball1.isColliding(ball2)).to.be.true
+        })
+
+        it("does not collide when sperated slightly", () => {
+            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
+            const ball2 = constructBallAt({ x: 2.001, y: 0, radius: 1 })
+            expect(ball1.isColliding(ball2)).to.be.false
+        })
+
+        function constructBallAt({ x, y, radius }) {
+            return new Ball({ x, y, vx: 0, vy: 0, radius })
+        }
+    })
+
     function expectBallPosition({ x, y }) {
         expect(ball.x).to.equal(x)
         expect(ball.y).to.equal(y)

@@ -8,6 +8,7 @@ export default class Ball {
         this.color = color;
         this.mass = mass;
     }
+
     render(ctx) {
         ctx.save();
         ctx.fillStyle = this.color;
@@ -20,22 +21,27 @@ export default class Ball {
         ctx.restore();
         return this;
     }
+
     move(dt) {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
     }
+
     translate({ x, y }) {
         this.x += x;
         this.y += y;
     }
+
     setPosition({ x, y }) {
         this.x = x;
         this.y = y;
     }
+
     setVelocity({ vx, vy }) {
         this.vx = vx;
         this.vy = vy;
     }
+
     get kineticEnergy() {
         const vSquared = this.vx ** 2 + this.vy ** 2
         return 1 / 2 * this.mass * vSquared;
@@ -59,6 +65,20 @@ export default class Ball {
         if (this.y - this.radius < top) {
             this.y = top + this.radius;
             this.vy *= -bounceFactor;
+        }
+    }
+
+    isColliding(otherBall) {
+        const { dx, dy } = this.getVectorTo(otherBall);
+        const distanceSquared = dx * dx + dy * dy;
+        const collisionDistanceSquared = (this.radius + otherBall.radius) ** 2;
+        return distanceSquared <= collisionDistanceSquared;
+    }
+
+    getVectorTo(targetBall) {
+        return {
+            dx: targetBall.x - this.x,
+            dy: targetBall.y - this.y
         }
     }
 }
