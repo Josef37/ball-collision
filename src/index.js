@@ -1,84 +1,7 @@
 import "./styles.css";
 import { iteratePairs, rotateCounterClockwise, rotateClockwise } from "./utils"
 import { updateChart } from "./chart";
-
-class Ball {
-    constructor({ x, y, vx, vy, radius, color = "red" }) {
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
-        this.radius = radius;
-        this.color = color;
-
-        this.mass = 1;
-    }
-    render(ctx) {
-        ctx.save();
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = this.color;
-        ctx.translate(this.x, this.y);
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, Math.PI * 2, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-        return this;
-    }
-    getBounds() {
-        return {
-            x: this.x - this.radius,
-            y: this.y - this.radius,
-            width: this.radius * 2,
-            height: this.radius * 2
-        };
-    }
-    move(dt) {
-        this.x += this.vx * dt;
-        this.y += this.vy * dt;
-    }
-    translate({ x, y }) {
-        this.x += x
-        this.y += y
-    }
-    setPosition({ x, y }) {
-        this.x = x
-        this.y = y
-    }
-    setVelocity({ vx, vy }) {
-        this.vx = vx
-        this.vy = vy
-    }
-    get kineticEnergy() {
-        return 1 / 2 * this.mass * this.velocity
-    }
-    get velocity() {
-        return Math.sqrt(this.vx ** 2 + this.vy ** 2)
-    }
-}
-
-// Reset the balls position to inside the canvas
-// and multiply the wallwards velocity with factor.
-const collideWall = (ball) => {
-    const bounceFactor = 1
-
-    if (ball.x + ball.radius > canvas.width) {
-        ball.x = canvas.width - ball.radius;
-        ball.vx *= -bounceFactor;
-    }
-    if (ball.x - ball.radius < 0) {
-        ball.x = ball.radius;
-        ball.vx *= -bounceFactor;
-    }
-    if (ball.y + ball.radius > canvas.height) {
-        ball.y = canvas.height - ball.radius;
-        ball.vy *= -bounceFactor;
-    }
-    if (ball.y - ball.radius < 0) {
-        ball.y = ball.radius;
-        ball.vy *= -bounceFactor;
-    }
-};
+import Ball from "./Ball";
 
 const collideTwoBalls = (ball0, ball1, dt) => {
     // 1. Rewind to moment of collision
@@ -190,7 +113,12 @@ function updateFrame(ts) {
             // ADD GRAVITY HERE
             // ball.vy += 0.01;
             ball.move(dt);
-            collideWall(ball);
+            ball.collideWithWall({
+                top: 0,
+                right: canvas.width,
+                bottom: canvas.height,
+                left: 0
+            })
         }
     }
 

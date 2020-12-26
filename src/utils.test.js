@@ -2,6 +2,8 @@ import { expect } from "chai"
 import { iteratePairs, rotateClockwise, rotateCounterClockwise } from "./utils"
 import sinon from "sinon"
 
+const roundingError = 1e-8
+
 describe("iteratePairs", () => {
     const callback = sinon.fake()
 
@@ -69,8 +71,8 @@ describe("rotateCounterClockwise", () => {
 
     function expectCounterClockwiseRotation({ pos: { x, y }, angle, expected }) {
         ({ x, y } = rotateCounterClockwise(x, y, Math.sin(angle), Math.cos(angle)))
-        expect(x).to.be.closeTo(expected.x, 1e-8)
-        expect(y).to.be.closeTo(expected.y, 1e-8)
+        expect(x).to.be.closeTo(expected.x, roundingError)
+        expect(y).to.be.closeTo(expected.y, roundingError)
     }
 })
 
@@ -109,7 +111,7 @@ describe("rotateClockwise", () => {
 
     function expectClockwiseRotation({ pos: { x, y }, angle, expected }) {
         ({ x, y } = rotateClockwise(x, y, Math.sin(angle), Math.cos(angle)))
-        expect(x).to.be.closeTo(expected.x, 1e-8)
-        expect(y).to.be.closeTo(expected.y, 1e-8)
+        expect(x).to.be.closeTo(expected.x, roundingError)
+        expect(y).to.be.closeTo(expected.y, roundingError)
     }
 })
