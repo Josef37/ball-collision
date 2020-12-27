@@ -1,4 +1,4 @@
-import minBy from "lodash/minBy"
+import _ from "lodash"
 import { rotateCounterClockwise, rotateClockwise } from "./utils"
 
 export default class Ball {
@@ -13,16 +13,11 @@ export default class Ball {
     }
 
     render(ctx) {
-        ctx.save();
         ctx.fillStyle = this.color;
-        ctx.strokeStyle = this.color;
-        ctx.translate(this.x, this.y);
         ctx.beginPath();
-        ctx.arc(0, 0, this.radius, Math.PI * 2, false);
-        ctx.closePath();
+        ctx.moveTo(this.x + this.radius, this.y);
+        ctx.arc(this.x, this.y, this.radius, Math.PI * 2, false);
         ctx.fill();
-        ctx.restore();
-        return this;
     }
 
     move(dt) {
@@ -110,76 +105,35 @@ export default class Ball {
         const c = dx ** 2 + dy ** 2 - touchingDistance ** 2
         const detSqrt = Math.sqrt(b ** 2 - 4 * a * c)
         const solutions = [(-b - detSqrt) / (2 * a), (-b + detSqrt) / (2 * a)]
-        const dt = minBy(solutions, Math.abs)
+        const dt = _.minBy(solutions, Math.abs)
         return dt
     }
 
     collideWith(otherBall) {
-        const moveBalls = (dt) => {
+        if (!this.isOverlapping(otherBall)) return
+
+        const dt = this.getLastCollisionTimeWith(otherBall)
+        moveBalls.bind(this)(dt)
+        this._collideWith(otherBall)
+        moveBalls.bind(this)(-dt)
+
+        function moveBalls(dt) {
             this.move(dt)
             otherBall.move(dt)
         }
-
-        if (!this.isOverlapping(otherBall)) return false
-
-        const dt = this.getLastCollisionTimeWith(otherBall)
-        moveBalls(dt)
-        this._collideWith(otherBall)
-        moveBalls(-dt)
-        return true
     }
 
-    // Assumes both balls to be touching (being at the moment of first contact)
-    _collideWith(otherBall) {
-        // 1. Transform coordinate system, s.t. ball2 has v=0 and ball1 has v₂=0
-        const vTranslation = {
-            vx: -otherBall.vx,
-            vy: -otherBall.vy
-        }
+    /**
+     * [Two dimensional elastic collision](https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects)
+     */
+    _collideWith(other) {
+        const { mass: m1, vx: v1x, vy: v1y, x: x1, y: y1 } = this
+        const { mass: m2, vx: v2x, vy: v2y, x: x2, y: y2 } = other
 
-        this.vx += vTranslation.vx
-        otherBall.vx += vTranslation.vx
-        this.vy += vTranslation.vy
-        otherBall.vy += vTranslation.vy
-
-        const angle = Math.atan2(this.vy, this.vx)
-        const sin = Math.sin(angle)
-        const cos = Math.cos(angle)
-
-        this.vx = rotateClockwise(this.vx, this.vy, sin, cos).x
-        this.vy = 0
-
-        const { dx, dy } = this.getVectorTo(otherBall)
-
-        // 3. Compute new velocities according to elastic collision
-        const v1x = this.vx
-        const { x: px, y: py } = rotateClockwise(dx, dy, sin, cos)
-        const m1 = this.mass
-        const m2 = otherBall.mass
-
-        const lambda = (2 * v1x * px) / ((m2 / m1 + 1) * (px ** 2 + py ** 2))
-        const v1x_ = 1 / m1 * (m1 * v1x - m2 * px * lambda)
-        const v1y_ = 1 / m1 * (- m2 * py * lambda)
-        const v2x_ = lambda * px
-        const v2y_ = lambda * py
-
-        this.vx = v1x_
-        this.vy = v1y_
-        otherBall.vx = v2x_
-        otherBall.vy = v2y_
-
-        // 4. Undo transformations form before
-        const rot1 = rotateCounterClockwise(this.vx, this.vy, sin, cos)
-        this.vx = rot1.x
-        this.vy = rot1.y
-
-        const rot2 = rotateCounterClockwise(otherBall.vx, otherBall.vy, sin, cos)
-        otherBall.vx = rot2.x
-        otherBall.vy = rot2.y
-
-        this.vx -= vTranslation.vx
-        otherBall.vx -= vTranslation.vx
-        this.vy -= vTranslation.vy
-        otherBall.vy -= vTranslation.vy
+        const c = 2 / (m1 + m2) * ((v1x - v2x) * (x1 - x2) + (v1y - v2y) * (y1 - y2)) / ((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        this.vx = v1x - m2 * c * (x1 - x2)
+        this.vy = v1y - m2 * c * (y1 - y2)
+        other.vx = v2x - m1 * c * (x2 - x1)
+        other.vy = v2y - m1 * c * (y2 - y1)
     }
 }

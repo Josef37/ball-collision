@@ -1,90 +1,112 @@
-import "./styles.css";
+import "./styles.css"
+import _ from "lodash"
 import { iteratePairs } from "./utils"
-import { updateChart } from "./chart";
-import Ball from "./Ball";
+import { updateChart } from "./chart"
+import Ball from "./Ball"
+
+const randomFloat = (...args) => _.random(...args, true)
+const randomHue = (...randomArgs) => _.random(...randomArgs).toString(16).padStart(2, 0)
+const randomColor = () => '#' + randomHue(128, 255) + randomHue(0) + randomHue(0, 64)
+
+const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
+const radiusFromMass = Math.sqrt
+
+const gravityAcceleration = 100 // in px/s^2
+const numberOfCollisionIterations = 10
+const dt = 1 / 60 // in seconds
+const numberOfBalls = 100
+const initialMaxVelocity = 500
 
 function updateFrame(ts) {
-    const dt = updateTimestep();
-    clearCanvas();
+    clearCanvas()
 
-    moveBalls();
-    collideBalls();
-    collideWithWalls();
+    moveBalls()
+    simulateCollisions()
 
-    renderBalls();
-    updateEnergyChart();
+    renderBalls()
+    updateEnergyChart(ts)
 
-    requestAnimationFrame(updateFrame);
+    requestAnimationFrame(updateFrame)
+}
 
-    function updateTimestep() {
-        const dt = ts - oldTime;
-        oldTime = ts;
-        return dt;
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+function moveBalls() {
+    for (const ball of balls) {
+        ball.vy += gravityAcceleration * dt
+        ball.move(dt)
     }
+}
 
-    function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+function simulateCollisions() {
+    _.times(numberOfCollisionIterations, () => {
+        collideWithWalls()
+        collideBalls()
+    })
+}
 
-    function moveBalls() {
-        for (const ball of balls) {
-            // ADD GRAVITY HERE
-            // ball.vy += 0.01;
-            ball.move(dt);
-        }
-    }
+function collideBalls() {
+    iteratePairs(balls, (ball1, ball2) => ball1.collideWith(ball2))
+}
 
-    function collideBalls() {
-        iteratePairs(balls, (ball1, ball2) => ball1.collideWith(ball2));
+function collideWithWalls() {
+    for (const ball of balls) {
+        ball.collideWithWall({
+            top: -Infinity,
+            right: canvas.width,
+            bottom: canvas.height,
+            left: 0,
+            bounceFactor: 0.8
+        })
     }
+}
 
-    function collideWithWalls() {
-        for (const ball of balls) {
-            ball.collideWithWall({
-                top: 0,
-                right: canvas.width,
-                bottom: canvas.height,
-                left: 0
-            })
-        }
+function renderBalls() {
+    for (const ball of balls) {
+        ball.render(ctx)
     }
+}
 
-    function renderBalls() {
-        for (const ball of balls) {
-            ball.render(ctx);
-        }
-    }
-
-    function updateEnergyChart() {
-        const energy = balls.reduce((energy, ball) => energy + ball.kineticEnergy, 0)
-        updateChart({ x: ts, y: energy })
-    }
+function updateEnergyChart(timestamp) {
+    const kineticEnergy = balls.reduce((energy, ball) => energy + ball.kineticEnergy, 0)
+    const totalEnergy = balls.reduce((energy, ball) => energy + ball.potentialEnergy(canvas.height, gravityAcceleration), kineticEnergy)
+    updateChart({ t: timestamp, kineticEnergy, totalEnergy })
 }
 
 function init() {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    const { canvas, ctx } = createCanvas()
+    const balls = createBalls()
 
-    let oldTime = 0;
+    requestAnimationFrame(updateFrame)
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    document.body.appendChild(canvas);
-
-    const numberOfBalls = 20
-    const balls = new Array(numberOfBalls).fill(null).map(
-        () => new Ball({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() * 2 - 1) * 0.2,
-            vy: (Math.random() * 2 - 1) * 0.2,
-            radius: 20
-        })
-    );
-
-    requestAnimationFrame(updateFrame);
-
-    return { canvas, oldTime, ctx, balls };
+    return { canvas, ctx, balls }
 }
 
-let { canvas, oldTime, ctx, balls } = init();
+function createCanvas() {
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    document.body.appendChild(canvas)
+    return { canvas, ctx }
+}
+
+function createBalls() {
+    return new Array(numberOfBalls).fill().map(() => {
+        const mass = randomMass()
+        return new Ball({
+            x: randomFloat(window.innerWidth),
+            y: randomFloat(window.innerHeight),
+            vx: randomFloat(-initialMaxVelocity, initialMaxVelocity),
+            vy: randomFloat(-initialMaxVelocity, initialMaxVelocity),
+            radius: radiusFromMass(mass),
+            mass,
+            color: randomColor()
+        })
+    })
+}
+
+const { canvas, ctx, balls } = init()
