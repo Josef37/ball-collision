@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { iteratePairs, rotateClockwise, rotateCounterClockwise } from "./utils"
+import { iteratePairs, rotate } from "./utils"
 import sinon from "sinon"
 
 const roundingError = 1e-8
@@ -36,9 +36,9 @@ describe("iteratePairs", () => {
     })
 })
 
-describe("rotateCounterClockwise", () => {
+describe("rotate", () => {
     it("does not rotate for 0 degrees", () => {
-        expectCounterClockwiseRotation({
+        expectRotation({
             pos: { x: 1, y: 2 },
             angle: 0,
             expected: { x: 1, y: 2 }
@@ -46,7 +46,7 @@ describe("rotateCounterClockwise", () => {
     })
 
     it("does rotate correctly 90 degrees", () => {
-        expectCounterClockwiseRotation({
+        expectRotation({
             pos: { x: 1, y: 0 },
             angle: Math.PI / 2,
             expected: { x: 0, y: 1 }
@@ -54,7 +54,7 @@ describe("rotateCounterClockwise", () => {
     })
 
     it("does rotate correctly 45 degrees", () => {
-        expectCounterClockwiseRotation({
+        expectRotation({
             pos: { x: 1, y: 0 },
             angle: Math.PI / 4,
             expected: { x: Math.SQRT1_2, y: Math.SQRT1_2 }
@@ -62,55 +62,23 @@ describe("rotateCounterClockwise", () => {
     })
 
     it("does rotate correctly 360 degrees", () => {
-        expectCounterClockwiseRotation({
+        expectRotation({
             pos: { x: 1, y: 2 },
             angle: Math.PI * 2,
             expected: { x: 1, y: 2 }
         })
     })
 
-    function expectCounterClockwiseRotation({ pos: { x, y }, angle, expected }) {
-        ({ x, y } = rotateCounterClockwise(x, y, Math.sin(angle), Math.cos(angle)))
-        expect(x).to.be.closeTo(expected.x, roundingError)
-        expect(y).to.be.closeTo(expected.y, roundingError)
-    }
-})
-
-describe("rotateClockwise", () => {
-    it("does not rotate for 0 degrees", () => {
-        expectClockwiseRotation({
-            pos: { x: 1, y: 2 },
-            angle: 0,
-            expected: { x: 1, y: 2 }
-        })
-    })
-
-    it("does rotate correctly 90 degrees", () => {
-        expectClockwiseRotation({
+    it("does rotate correctly -45 degrees", () => {
+        expectRotation({
             pos: { x: 1, y: 0 },
-            angle: Math.PI / 2,
-            expected: { x: 0, y: -1 }
-        })
-    })
-
-    it("does rotate correctly 45 degrees", () => {
-        expectClockwiseRotation({
-            pos: { x: 1, y: 0 },
-            angle: Math.PI / 4,
+            angle: - Math.PI / 4,
             expected: { x: Math.SQRT1_2, y: -1 * Math.SQRT1_2 }
         })
     })
 
-    it("does rotate correctly 360 degrees", () => {
-        expectClockwiseRotation({
-            pos: { x: 1, y: 2 },
-            angle: Math.PI * 2,
-            expected: { x: 1, y: 2 }
-        })
-    })
-
-    function expectClockwiseRotation({ pos: { x, y }, angle, expected }) {
-        ({ x, y } = rotateClockwise(x, y, Math.sin(angle), Math.cos(angle)))
+    function expectRotation({ pos: { x, y }, angle, expected }) {
+        ({ x, y } = rotate(x, y, angle))
         expect(x).to.be.closeTo(expected.x, roundingError)
         expect(y).to.be.closeTo(expected.y, roundingError)
     }

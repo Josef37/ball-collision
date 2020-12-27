@@ -48,7 +48,7 @@ function simulateCollisions() {
 }
 
 function collideBalls() {
-    iteratePairs(balls, (ball1, ball2) => ball1.collideWith(ball2))
+    iteratePairs(balls, (ball1, ball2) => ball1.collideInelasticWith(ball2))
 }
 
 function collideWithWalls() {

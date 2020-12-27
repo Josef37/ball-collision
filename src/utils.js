@@ -9,14 +9,7 @@ export function iteratePairs(array, callback) {
     }
 }
 
-// Rotate (x,y) counter-clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
-export const rotateCounterClockwise = (x, y, sin, cos) => ({
-    x: x * cos - y * sin,
-    y: y * cos + x * sin
-});
-
-// Rotate (x,y) clockwise around (0,0) with `sin` and `cos` precomputed from the same angle
-export const rotateClockwise = (x, y, sin, cos) => ({
-    x: x * cos + y * sin,
-    y: y * cos - x * sin
+export const rotate = (x, y, angle) => ({
+    x: x * Math.cos(angle) - y * Math.sin(angle),
+    y: y * Math.cos(angle) + x * Math.sin(angle)
 });

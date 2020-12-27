@@ -1,5 +1,5 @@
 import _ from "lodash"
-import { rotateCounterClockwise, rotateClockwise } from "./utils"
+import { rotate } from "./utils"
 
 export default class Ball {
     constructor({ x = 0, y = 0, vx = 0, vy = 0, radius = 1, mass = 1, color = "red" }) {
@@ -30,6 +30,11 @@ export default class Ball {
         this.y += y;
     }
 
+    translateVelocity({ vx, vy }) {
+        this.vx += vx;
+        this.vy += vy;
+    }
+
     setPosition({ x, y }) {
         this.x = x;
         this.y = y;
@@ -38,6 +43,12 @@ export default class Ball {
     setVelocity({ vx, vy }) {
         this.vx = vx;
         this.vy = vy;
+    }
+
+    rotate(angle) {
+        const { x, y } = rotate(this.x, this.y, angle)
+        const { x: vx, y: vy } = rotate(this.vx, this.vy, angle)
+        Object.assign(this, { x, y, vx, vy })
     }
 
     get kineticEnergy() {
@@ -109,31 +120,87 @@ export default class Ball {
         return dt
     }
 
-    collideWith(otherBall) {
+    collideElasticWith(other) {
+        this.collideWith(other, Ball.collideElastic)
+    }
+
+    collideInelasticWith(other) {
+        this.collideWith(other, Ball.collideInelastic)
+    }
+
+    collideWith(otherBall, collisionFunc) {
         if (!this.isOverlapping(otherBall)) return
 
         const dt = this.getLastCollisionTimeWith(otherBall)
-        moveBalls.bind(this)(dt)
-        this._collideWith(otherBall)
-        moveBalls.bind(this)(-dt)
+        Ball.moveBalls([this, otherBall], dt)
+        collisionFunc(this, otherBall)
+        Ball.moveBalls([this, otherBall], -dt)
+    }
 
-        function moveBalls(dt) {
-            this.move(dt)
-            otherBall.move(dt)
-        }
+    static moveBalls(balls, dt) {
+        balls.forEach(ball => ball.move(dt))
     }
 
     /**
      * [Two dimensional elastic collision](https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects)
      */
-    _collideWith(other) {
-        const { mass: m1, vx: v1x, vy: v1y, x: x1, y: y1 } = this
-        const { mass: m2, vx: v2x, vy: v2y, x: x2, y: y2 } = other
+    static collideElastic(ball1, ball2) {
+        const { mass: m1, vx: v1x, vy: v1y, x: x1, y: y1 } = ball1
+        const { mass: m2, vx: v2x, vy: v2y, x: x2, y: y2 } = ball2
 
         const c = 2 / (m1 + m2) * ((v1x - v2x) * (x1 - x2) + (v1y - v2y) * (y1 - y2)) / ((x1 - x2) ** 2 + (y1 - y2) ** 2)
-        this.vx = v1x - m2 * c * (x1 - x2)
-        this.vy = v1y - m2 * c * (y1 - y2)
-        other.vx = v2x - m1 * c * (x2 - x1)
-        other.vy = v2y - m1 * c * (y2 - y1)
+        ball1.vx = v1x - m2 * c * (x1 - x2)
+        ball1.vy = v1y - m2 * c * (y1 - y2)
+        ball2.vx = v2x - m1 * c * (x2 - x1)
+        ball2.vy = v2y - m1 * c * (y2 - y1)
+    }
+
+    static collideInelastic(ball1, ball2) {
+        const { angle, vTranslation } = Ball.transformForCollision(ball1, ball2);
+
+        const { dx, dy } = ball1.getVectorTo(ball2)
+        const distanceSquared = dx ** 2 + dy ** 2
+        const alpha = ball2.mass / ball1.mass
+
+        const lambda = ball1.vx * dx / ((alpha + 1) * distanceSquared)
+
+        ball2.vx = lambda * dx
+        ball2.vy = lambda * dy
+
+        ball1.vx = ball1.vx - alpha * ball2.vx
+        ball1.vy = ball1.vy - alpha * ball2.vy
+
+        Ball.undoCollisionTransform(ball1, ball2, angle, vTranslation);
+    }
+
+    /**
+     * Changes reference frame to stationary `ball2` (v2x = v2y = 0).
+     * Rotates reference frame to `ball1` moving in x-direction (v1y = 0).
+     */
+    static transformForCollision(ball1, ball2) {
+        const vTranslation = {
+            vx: -ball2.vx,
+            vy: -ball2.vy
+        };
+        ball1.translateVelocity(vTranslation)
+        ball2.translateVelocity(vTranslation)
+
+        const angle = Math.atan2(ball1.vy, ball1.vx)
+        ball1.rotate(-angle)
+        ball2.rotate(-angle)
+
+        return { angle, vTranslation }
+    }
+
+    /**
+     * Undos `transformForCollision()`.
+     */
+    static undoCollisionTransform(ball1, ball2, angle, vTranslation) {
+        ball1.rotate(angle)
+        ball2.rotate(angle)
+
+        const reverseVTranslation = _.mapValues(vTranslation, v => -v)
+        ball1.translateVelocity(reverseVTranslation)
+        ball2.translateVelocity(reverseVTranslation)
     }
 }

@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import _ from "lodash"
 import Ball from "./Ball"
 
 const roundingError = 1e-8
@@ -207,7 +208,7 @@ describe("Ball", () => {
         it("works for one-dimensional collision with equal velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(1)
         })
@@ -215,7 +216,7 @@ describe("Ball", () => {
         it("works for one-dimensional collision with different velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 2, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(2)
         })
@@ -223,7 +224,7 @@ describe("Ball", () => {
         it("works for one-dimensional collision with different masses", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1, mass: 2 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1, mass: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball1.vx).to.be.closeTo(-1 / 3, roundingError)
             expect(ball2.vx).to.be.closeTo(5 / 3, roundingError)
         })
@@ -231,7 +232,7 @@ describe("Ball", () => {
         it("works in y-direction", () => {
             const ball1 = new Ball({ y: 0, vy: 2, radius: 1 })
             const ball2 = new Ball({ y: 2, vy: -1, radius: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball1.vy).to.equal(-1)
             expect(ball2.vy).to.equal(2)
         })
@@ -239,24 +240,34 @@ describe("Ball", () => {
         it("works for non-center collisions", () => {
             const ball1 = new Ball({ vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 1.2, y: 1.6, radius: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball2.vy / ball2.vx).to.be.closeTo(ball2.y / ball2.x, roundingError, "ball2 direction")
             expect(ball1.vy / ball1.vx).to.be.closeTo(- ball2.x / ball2.y, roundingError, "ball1 direction")
         })
 
         it("preserves kinetic energy", () => {
-            const numberOfTests = 1
-            const random = (n = 5) => 2 * n * Math.random() - n
-            for (const _ of Array(numberOfTests)) {
-                const ball1 = new Ball({ vx: random(), vy: random() })
-                const x = random(2)
-                const y = Math.sqrt(2 ** 2 - x ** 2)
-                const ball2 = new Ball({ x, y, vx: random(), vy: random() })
+            const numberOfTests = 10
+            testRandomCollisions(numberOfTests, (ball1, ball2) => {
                 const kineticEnergyBefore = ball1.kineticEnergy + ball2.kineticEnergy
-                ball1.collideWith(ball2)
+
+                ball1.collideElasticWith(ball2)
+
                 const kineticEnergyAfter = ball1.kineticEnergy + ball2.kineticEnergy
                 expect(kineticEnergyBefore).to.be.closeTo(kineticEnergyAfter, roundingError)
-            }
+            })
+        })
+
+        it("preserves momentum", () => {
+            const numberOfTests = 10
+            testRandomCollisions(numberOfTests, (ball1, ball2) => {
+                const momentumXBefore = ball1.mass * ball1.vx + ball2.mass * ball2.vx
+                const momentumYBefore = ball1.mass * ball1.vy + ball2.mass * ball2.vy
+                ball1.collideElasticWith(ball2)
+                const momentumXAfter = ball1.mass * ball1.vx + ball2.mass * ball2.vx
+                const momentumYAfter = ball1.mass * ball1.vy + ball2.mass * ball2.vy
+                expect(momentumXBefore).to.be.closeTo(momentumXAfter, roundingError)
+                expect(momentumYBefore).to.be.closeTo(momentumYAfter, roundingError)
+            })
         })
     })
 
@@ -264,13 +275,69 @@ describe("Ball", () => {
         it("works for one-dimensional collision with equal velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
-            ball1.collideWith(ball2)
+            ball1.collideElasticWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(1)
             expect(ball1.x).to.equal(-1)
             expect(ball2.x).to.equal(2)
         })
     })
+
+    describe("inelastic collision", () => {
+        it("collides totally inelastic in x-direction", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
+            ball1.collideInelasticWith(ball2)
+            expect(ball1.vx).to.equal(ball2.vx).to.equal(0)
+        })
+
+        it("collides totally inelastic in y-direction", () => {
+            const ball1 = new Ball({ y: 0, vy: 1, radius: 1 })
+            const ball2 = new Ball({ y: 2, vy: -1, radius: 1 })
+            ball1.collideInelasticWith(ball2)
+            expect(ball1.vy).to.equal(ball2.vy).to.equal(0)
+        })
+
+        it("collides totally inelastic in two dimensions", () => {
+            const ball1 = new Ball({ x: 0, y: 0, vx: 1, vy: 1, radius: 1 })
+            const ball2 = new Ball({ x: Math.SQRT2 - 0.01, y: Math.SQRT2 - 0.01, vx: -1, vy: -1, radius: 1 })
+            ball1.collideInelasticWith(ball2)
+            expect(ball1.vx).to.be.closeTo(ball2.vx, roundingError)
+            expect(ball1.vy).to.be.closeTo(ball2.vy, roundingError)
+            expect(ball1.vx).to.be.closeTo(0, roundingError)
+            expect(ball1.vy).to.be.closeTo(0, roundingError)
+        })
+
+        it("preserves momentum", () => {
+            const numberOfTests = 10
+            testRandomCollisions(numberOfTests, (ball1, ball2) => {
+                const momentumXBefore = ball1.mass * ball1.vx + ball2.mass * ball2.vx
+                const momentumYBefore = ball1.mass * ball1.vy + ball2.mass * ball2.vy
+                ball1.collideInelasticWith(ball2)
+                const momentumXAfter = ball1.mass * ball1.vx + ball2.mass * ball2.vx
+                const momentumYAfter = ball1.mass * ball1.vy + ball2.mass * ball2.vy
+                expect(momentumXBefore).to.be.closeTo(momentumXAfter, roundingError)
+                expect(momentumYBefore).to.be.closeTo(momentumYAfter, roundingError)
+            })
+        })
+    })
+
+    describe("partial inelastic collision", () => {
+
+    })
+
+    function testRandomCollisions(numberOfTests, testCallback) {
+        const maxVelocity = 5
+        const randomVelocity = () => _.random(-maxVelocity, maxVelocity, true)
+        for (const i of Array(numberOfTests)) {
+            const ball1 = new Ball({ vx: randomVelocity(), vy: randomVelocity() })
+            const x = _.random(2, true)
+            const y = Math.sqrt(2 ** 2 - x ** 2)
+            const ball2 = new Ball({ x, y, vx: randomVelocity(), vy: randomVelocity() })
+
+            testCallback(ball1, ball2)
+        }
+    }
 
     function expectBallPosition({ x, y }) {
         expect(ball.x).to.equal(x)
