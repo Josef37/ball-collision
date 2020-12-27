@@ -50,25 +50,30 @@ export default class Ball {
         return 1 / 2 * this.mass * vSquared;
     }
 
-    /**
-     * Reset the balls position to inside the canvas coordinate system
-     * and multiply the wallwards velocity with factor.
-     */
+    potentialEnergy(bottomWall, gravityAcceleration) {
+        const height = bottomWall - this.y
+        return this.mass * gravityAcceleration * height
+    }
+
     collideWithWall({ top, right, bottom, left, bounceFactor = 1 }) {
-        if (this.x + this.radius > right) {
-            this.x = right - this.radius;
+        const overlapRight = this.x + this.radius - right
+        if (overlapRight > 0) {
+            this.x -= overlapRight * (1 + bounceFactor)
+            this.vx *= -bounceFactor
+        }
+        const overlapLeft = -this.x + this.radius + left
+        if (overlapLeft > 0) {
+            this.x += overlapLeft * (1 + bounceFactor)
             this.vx *= -bounceFactor;
         }
-        if (this.x - this.radius < left) {
-            this.x = left + this.radius;
-            this.vx *= -bounceFactor;
-        }
-        if (this.y + this.radius > bottom) {
-            this.y = bottom - this.radius;
+        const overlapBottom = this.y + this.radius - bottom
+        if (overlapBottom > 0) {
+            this.y -= overlapBottom * (1 + bounceFactor)
             this.vy *= -bounceFactor;
         }
-        if (this.y - this.radius < top) {
-            this.y = top + this.radius;
+        const overlapTop = -this.y + this.radius + top
+        if (overlapTop > 0) {
+            this.y += overlapTop * (1 + bounceFactor)
             this.vy *= -bounceFactor;
         }
     }
@@ -115,12 +120,13 @@ export default class Ball {
             otherBall.move(dt)
         }
 
-        if (!this.isOverlapping(otherBall)) return
+        if (!this.isOverlapping(otherBall)) return false
 
         const dt = this.getLastCollisionTimeWith(otherBall)
         moveBalls(dt)
         this._collideWith(otherBall)
         moveBalls(-dt)
+        return true
     }
 
     // Assumes both balls to be touching (being at the moment of first contact)

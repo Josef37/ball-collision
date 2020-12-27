@@ -73,7 +73,8 @@ describe("Ball", () => {
             top: -10,
             right: 10,
             bottom: 10,
-            left: -10
+            left: -10,
+            bounceFactor: 0.5
         }
 
         beforeEach(() => {
@@ -89,40 +90,34 @@ describe("Ball", () => {
 
         it("does collide with left wall", () => {
             ball.x = -8
+            ball.vx = 1
             ball.collideWithWall(wall)
-            expectBallPosition({ x: ball.radius + wall.left, y: 0 })
+            expectBallPosition({ x: -3.5, y: 0 })
         })
 
         it("does collide with right wall", () => {
             ball.x = 8
             ball.collideWithWall(wall)
-            expectBallPosition({ x: - ball.radius + wall.right, y: 0 })
+            expectBallPosition({ x: 3.5, y: 0 })
         })
 
         it("does collide with top wall", () => {
             ball.y = -8
             ball.collideWithWall(wall)
-            expectBallPosition({ x: 0, y: ball.radius + wall.top })
+            expectBallPosition({ x: 0, y: -3.5 })
         })
 
         it("does collide with bottom wall", () => {
             ball.y = 8
             ball.collideWithWall(wall)
-            expectBallPosition({ x: 0, y: - ball.radius + wall.bottom })
-        })
-
-        it("changes velocity magintude and direction", () => {
-            ball.x = 8
-            ball.vx = 10
-            ball.collideWithWall({ ...wall, bounceFactor: 0.5 })
-            expect(ball.vx).to.equal(-5)
+            expectBallPosition({ x: 0, y: 3.5 })
         })
 
         it("collides with corner wall", () => {
             ball.x = 8
             ball.y = 8
             ball.collideWithWall(wall)
-            expectBallPosition({ x: wall.right - ball.radius, y: wall.bottom - ball.radius })
+            expectBallPosition({ x: 3.5, y: 3.5 })
         })
     })
 
@@ -208,11 +203,11 @@ describe("Ball", () => {
         })
     })
 
-    describe("collision (touching)", () => {
+    describe("touching collision", () => {
         it("works for one-dimensional collision with equal velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
-            ball1._collideWith(ball2)
+            ball1.collideWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(1)
         })
@@ -220,7 +215,7 @@ describe("Ball", () => {
         it("works for one-dimensional collision with different velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 2, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
-            ball1._collideWith(ball2)
+            ball1.collideWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(2)
         })
@@ -228,7 +223,7 @@ describe("Ball", () => {
         it("works for one-dimensional collision with different masses", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1, mass: 2 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1, mass: 1 })
-            ball1._collideWith(ball2)
+            ball1.collideWith(ball2)
             expect(ball1.vx).to.be.closeTo(-1 / 3, roundingError)
             expect(ball2.vx).to.be.closeTo(5 / 3, roundingError)
         })
@@ -236,7 +231,7 @@ describe("Ball", () => {
         it("works in y-direction", () => {
             const ball1 = new Ball({ y: 0, vy: 2, radius: 1 })
             const ball2 = new Ball({ y: 2, vy: -1, radius: 1 })
-            ball1._collideWith(ball2)
+            ball1.collideWith(ball2)
             expect(ball1.vy).to.equal(-1)
             expect(ball2.vy).to.equal(2)
         })
@@ -244,12 +239,12 @@ describe("Ball", () => {
         it("works for non-center collisions", () => {
             const ball1 = new Ball({ vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 1.2, y: 1.6, radius: 1 })
-            ball1._collideWith(ball2)
+            ball1.collideWith(ball2)
             expect(ball2.vy / ball2.vx).to.be.closeTo(ball2.y / ball2.x, roundingError, "ball2 direction")
             expect(ball1.vy / ball1.vx).to.be.closeTo(- ball2.x / ball2.y, roundingError, "ball1 direction")
         })
 
-        it.only("preserves kinetic energy", () => {
+        it("preserves kinetic energy", () => {
             const numberOfTests = 1
             const random = (n = 5) => 2 * n * Math.random() - n
             for (const _ of Array(numberOfTests)) {
@@ -258,10 +253,22 @@ describe("Ball", () => {
                 const y = Math.sqrt(2 ** 2 - x ** 2)
                 const ball2 = new Ball({ x, y, vx: random(), vy: random() })
                 const kineticEnergyBefore = ball1.kineticEnergy + ball2.kineticEnergy
-                ball1._collideWith(ball2)
+                ball1.collideWith(ball2)
                 const kineticEnergyAfter = ball1.kineticEnergy + ball2.kineticEnergy
                 expect(kineticEnergyBefore).to.be.closeTo(kineticEnergyAfter, roundingError)
             }
+        })
+    })
+
+    describe("overlapping collision", () => {
+        it("works for one-dimensional collision with equal velocities", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
+            ball1.collideWith(ball2)
+            expect(ball1.vx).to.equal(-1)
+            expect(ball2.vx).to.equal(1)
+            expect(ball1.x).to.equal(-1)
+            expect(ball2.x).to.equal(2)
         })
     })
 
