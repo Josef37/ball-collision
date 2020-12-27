@@ -11,15 +11,17 @@ const randomColor = () => '#' + randomHue(128, 255) + randomHue(0) + randomHue(0
 const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
 const radiusFromMass = Math.sqrt
 
-const gravityAcceleration = 100 // in px/s^2
-const numberOfCollisionIterations = 10
+const gravityAcceleration = 300 // in px/s^2
+const numberOfCollisionIterations = 5
 const dt = 1 / 60 // in seconds
 const numberOfBalls = 100
 const initialMaxVelocity = 500
+const coefficientOfRestitution = 0.9
 
 function updateFrame(ts) {
     clearCanvas()
 
+    applyForces()
     moveBalls()
     simulateCollisions()
 
@@ -33,9 +35,14 @@ function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-function moveBalls() {
+function applyForces() {
     for (const ball of balls) {
         ball.vy += gravityAcceleration * dt
+    }
+}
+
+function moveBalls() {
+    for (const ball of balls) {
         ball.move(dt)
     }
 }
@@ -48,7 +55,11 @@ function simulateCollisions() {
 }
 
 function collideBalls() {
-    iteratePairs(balls, (ball1, ball2) => ball1.collideInelasticWith(ball2))
+    iteratePairs(
+        balls,
+        (ball1, ball2) =>
+            ball1.collideWith(ball2, coefficientOfRestitution)
+    )
 }
 
 function collideWithWalls() {
@@ -58,7 +69,7 @@ function collideWithWalls() {
             right: canvas.width,
             bottom: canvas.height,
             left: 0,
-            bounceFactor: 0.8
+            bounceFactor: coefficientOfRestitution
         })
     }
 }

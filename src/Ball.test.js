@@ -323,7 +323,22 @@ describe("Ball", () => {
     })
 
     describe("partial inelastic collision", () => {
+        it("loses kinetic energy according to coefficient of restitution", () => {
+            const minEnergy = getKinteticEnergy(0)
+            const maxEnergy = getKinteticEnergy(1)
 
+            const halfEnergy = getKinteticEnergy(Math.SQRT1_2)
+            expect(halfEnergy).to.equal(0.5 * minEnergy + 0.5 * maxEnergy)
+            const quarterEnergy = getKinteticEnergy(0.5)
+            expect(quarterEnergy).to.equal(0.75 * minEnergy + 0.25 * maxEnergy)
+
+            function getKinteticEnergy(coefficientOfRestitution) {
+                const ball1 = new Ball({ vx: 1, vy: 1 })
+                const ball2 = new Ball({ x: 2, vx: -1 })
+                ball1.collideWith(ball2, coefficientOfRestitution)
+                return ball1.kineticEnergy + ball2.kineticEnergy
+            }
+        })
     })
 
     function testRandomCollisions(numberOfTests, testCallback) {

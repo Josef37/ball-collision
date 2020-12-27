@@ -120,87 +120,57 @@ export default class Ball {
         return dt
     }
 
-    collideElasticWith(other) {
-        this.collideWith(other, Ball.collideElastic)
+    collideElasticWith(otherBall) {
+        const coefficientOfRestitution = 1
+        this.collideWith(otherBall, coefficientOfRestitution)
     }
 
-    collideInelasticWith(other) {
-        this.collideWith(other, Ball.collideInelastic)
+    collideInelasticWith(otherBall) {
+        const coefficientOfRestitution = 0
+        this.collideWith(otherBall, coefficientOfRestitution)
     }
 
-    collideWith(otherBall, collisionFunc) {
+    /**
+     * If balls are overlapping  
+     * 1. Rewind to first contact
+     * 2. Collide according to coefficient of restitution
+     * 3. Fast-forward to now
+     */
+    collideWith(otherBall, coefficientOfRestitution) {
         if (!this.isOverlapping(otherBall)) return
 
         const dt = this.getLastCollisionTimeWith(otherBall)
-        Ball.moveBalls([this, otherBall], dt)
-        collisionFunc(this, otherBall)
-        Ball.moveBalls([this, otherBall], -dt)
+        rewindToFirstContact([this, otherBall], dt)
+        Ball.collide([this, otherBall], coefficientOfRestitution)
+        fastForwardToNow([this, otherBall], dt)
+
+        function rewindToFirstContact(balls, dt) { balls.forEach(ball => ball.move(dt)) }
+        function fastForwardToNow(balls, dt) { balls.forEach(ball => ball.move(-dt)) }
     }
 
-    static moveBalls(balls, dt) {
-        balls.forEach(ball => ball.move(dt))
-    }
-
-    /**
-     * [Two dimensional elastic collision](https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects)
+    /** 
+     * Inelastic collision with coefficient of restitution.  
+     * See https://en.wikipedia.org/wiki/Inelastic_collision#Formula
      */
-    static collideElastic(ball1, ball2) {
-        const { mass: m1, vx: v1x, vy: v1y, x: x1, y: y1 } = ball1
-        const { mass: m2, vx: v2x, vy: v2y, x: x2, y: y2 } = ball2
-
-        const c = 2 / (m1 + m2) * ((v1x - v2x) * (x1 - x2) + (v1y - v2y) * (y1 - y2)) / ((x1 - x2) ** 2 + (y1 - y2) ** 2)
-        ball1.vx = v1x - m2 * c * (x1 - x2)
-        ball1.vy = v1y - m2 * c * (y1 - y2)
-        ball2.vx = v2x - m1 * c * (x2 - x1)
-        ball2.vy = v2y - m1 * c * (y2 - y1)
-    }
-
-    static collideInelastic(ball1, ball2) {
-        const { angle, vTranslation } = Ball.transformForCollision(ball1, ball2);
+    static collide([ball1, ball2], coefficientOfRestitution) {
+        const { mass: m1 } = ball1
+        const { mass: m2 } = ball2
 
         const { dx, dy } = ball1.getVectorTo(ball2)
         const distanceSquared = dx ** 2 + dy ** 2
-        const alpha = ball2.mass / ball1.mass
 
-        const lambda = ball1.vx * dx / ((alpha + 1) * distanceSquared)
+        const v1NormalFraction = (dx * ball1.vx + dy * ball1.vy) / distanceSquared
+        const v1Normal = { vx: v1NormalFraction * dx, vy: v1NormalFraction * dy }
+        const v2NormalFraction = (dx * ball2.vx + dy * ball2.vy) / distanceSquared
+        const v2Normal = { vx: v2NormalFraction * dx, vy: v2NormalFraction * dy }
 
-        ball2.vx = lambda * dx
-        ball2.vy = lambda * dy
+        const c = m1 * m2 / (m1 + m2) * (1 + coefficientOfRestitution)
+        const normalImpulseX = c * (v2Normal.vx - v1Normal.vx)
+        const normalImpulseY = c * (v2Normal.vy - v1Normal.vy)
 
-        ball1.vx = ball1.vx - alpha * ball2.vx
-        ball1.vy = ball1.vy - alpha * ball2.vy
-
-        Ball.undoCollisionTransform(ball1, ball2, angle, vTranslation);
-    }
-
-    /**
-     * Changes reference frame to stationary `ball2` (v2x = v2y = 0).
-     * Rotates reference frame to `ball1` moving in x-direction (v1y = 0).
-     */
-    static transformForCollision(ball1, ball2) {
-        const vTranslation = {
-            vx: -ball2.vx,
-            vy: -ball2.vy
-        };
-        ball1.translateVelocity(vTranslation)
-        ball2.translateVelocity(vTranslation)
-
-        const angle = Math.atan2(ball1.vy, ball1.vx)
-        ball1.rotate(-angle)
-        ball2.rotate(-angle)
-
-        return { angle, vTranslation }
-    }
-
-    /**
-     * Undos `transformForCollision()`.
-     */
-    static undoCollisionTransform(ball1, ball2, angle, vTranslation) {
-        ball1.rotate(angle)
-        ball2.rotate(angle)
-
-        const reverseVTranslation = _.mapValues(vTranslation, v => -v)
-        ball1.translateVelocity(reverseVTranslation)
-        ball2.translateVelocity(reverseVTranslation)
+        ball1.vx += normalImpulseX / m1
+        ball1.vy += normalImpulseY / m1
+        ball2.vx -= normalImpulseX / m2
+        ball2.vy -= normalImpulseY / m2
     }
 }
