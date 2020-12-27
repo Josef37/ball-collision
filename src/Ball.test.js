@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import Ball from "./Ball"
 
+const roundingError = 1e-8
+
 describe("Ball", () => {
     const ballParams = {
         x: 1,
@@ -186,7 +188,6 @@ describe("Ball", () => {
             const ball2 = new Ball({ x: 1, y: 1, vx: -1, vy: -1, radius: 1 })
             const dt = ball1.getLastCollisionTimeWith(ball2)
 
-            const roundingError = 1e-8
             expect(dt).to.be.closeTo(-0.207106781, roundingError)
         })
 
@@ -207,13 +208,53 @@ describe("Ball", () => {
         })
     })
 
-    describe.only("collision (touching)", () => {
-        it("works for one-dimensional collision (equal velocity)", () => {
+    describe("collision (touching)", () => {
+        it("works for one-dimensional collision with equal velocities", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
             ball1._collideWith(ball2)
             expect(ball1.vx).to.equal(-1)
             expect(ball2.vx).to.equal(1)
+        })
+
+        it("works for one-dimensional collision with different velocities", () => {
+            const ball1 = new Ball({ x: 0, vx: 2, radius: 1 })
+            const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
+            ball1._collideWith(ball2)
+            expect(ball1.vx).to.equal(-1)
+            expect(ball2.vx).to.equal(2)
+        })
+
+        it("works for one-dimensional collision with different masses", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1, mass: 2 })
+            const ball2 = new Ball({ x: 2, vx: -1, radius: 1, mass: 1 })
+            ball1._collideWith(ball2)
+            expect(ball1.vx).to.be.closeTo(-1 / 3, roundingError)
+            expect(ball2.vx).to.be.closeTo(5 / 3, roundingError)
+        })
+
+        it("works in y-direction", () => {
+            const ball1 = new Ball({ y: 0, vy: 2, radius: 1 })
+            const ball2 = new Ball({ y: 2, vy: -1, radius: 1 })
+            ball1._collideWith(ball2)
+            expect(ball1.vy).to.equal(-1)
+            expect(ball2.vy).to.equal(2)
+        })
+
+        it("preserves kinetic energy", () => {
+            const numberOfTests = 10
+            const random = (n = 5) => 2 * n * Math.random() - n
+            for (const _ of Array(numberOfTests).fill()) {
+                const ball1 = new Ball({ vy: random(), vy: random() })
+                const x = random(2)
+                const y = Math.sqrt(2 ** 2 - x ** 2)
+                const ball2 = new Ball({ x, y, vy: random(), vy: random() })
+                const kineticEnergyBefore = ball1.kineticEnergy + ball2.kineticEnergy
+                ball1._collideWith(ball2)
+                const kineticEnergyAfter = ball1.kineticEnergy + ball2.kineticEnergy
+                expect(kineticEnergyBefore).to.be.closeTo(kineticEnergyAfter, roundingError)
+            }
+
         })
     })
 

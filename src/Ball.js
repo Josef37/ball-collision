@@ -125,53 +125,55 @@ export default class Ball {
 
     // Assumes both balls to be touching (being at the moment of first contact)
     _collideWith(otherBall) {
-        const { dx, dy } = this.getVectorTo(otherBall);
+        // 1. Transform coordinate system, s.t. ball2 has v=0 and ball1 has v₂=0
+        const vTranslation = {
+            vx: -otherBall.vx,
+            vy: -otherBall.vy
+        }
 
-        // calculate angle, sine, and cosine
-        const angle = Math.atan2(dy, dx);
-        const sin = Math.sin(angle);
-        const cos = Math.cos(angle);
+        this.vx += vTranslation.vx
+        otherBall.vx += vTranslation.vx
+        this.vy += vTranslation.vy
+        otherBall.vy += vTranslation.vy
 
-        // For the computation, rotate and translate the two balls, 
-        // that this is at (0,0) and otherBall is at (dist,0)
-        let pos0 = 0;
-        let pos1 = rotateClockwise(dx, dy, sin, cos).x;
+        const angle = Math.atan2(this.vy, this.vx)
+        const sin = Math.sin(angle)
+        const cos = Math.cos(angle)
 
-        const vel0 = rotateClockwise(this.vx, this.vy, sin, cos);
-        const vel1 = rotateClockwise(otherBall.vx, otherBall.vy, sin, cos);
+        this.vx = rotateCounterClockwise(this.vx, this.vy, sin, cos).x
+        this.vy = 0
 
-        // Elastic collision along x-axis
-        const vxTotal = vel0.x - vel1.x;
-        vel0.x =
-            ((this.mass - otherBall.mass) * vel0.x + 2 * otherBall.mass * vel1.x) /
-            (this.mass + otherBall.mass);
-        vel1.x = vxTotal + vel0.x;
+        const { dx, dy } = this.getVectorTo(otherBall)
 
-        //rotate positions back
-        const pos0F = rotateCounterClockwise(pos0, 0, sin, cos);
-        const pos1F = rotateCounterClockwise(pos1, 0, sin, cos);
+        // 3. Compute new velocities according to elastic collision
+        const v1x = this.vx
+        const { x: px, y: py } = rotateCounterClockwise(dx, dy, sin, cos)
+        const m1 = this.mass
+        const m2 = otherBall.mass
 
-        //adjust positions to actual screen positions
-        otherBall.setPosition({
-            x: this.x + pos1F.x,
-            y: this.y + pos1F.y
-        })
-        this.setPosition({
-            x: this.x + pos0F.x,
-            y: this.y + pos0F.y
-        })
+        const lambda = (2 * v1x * px) / ((m2 / m1 + 1) * (px ** 2 + py ** 2))
+        const v1x_ = 1 / m1 * (m1 * v1x - m2 * px * lambda)
+        const v1y_ = 1 / m1 * (- m2 * py * lambda)
+        const v2x_ = lambda * px
+        const v2y_ = lambda * py
 
-        //rotate velocities back
-        const vel0F = rotateCounterClockwise(vel0.x, vel0.y, sin, cos);
-        const vel1F = rotateCounterClockwise(vel1.x, vel1.y, sin, cos);
+        this.vx = v1x_
+        this.vy = v1y_
+        otherBall.vx = v2x_
+        otherBall.vy = v2y_
 
-        this.setVelocity({
-            vx: vel0F.x,
-            vy: vel0F.y
-        })
-        otherBall.setVelocity({
-            vx: vel1F.x,
-            vy: vel1F.y
-        })
+        // 4. Undo transformations form before
+        const rot1 = rotateClockwise(this.vx, this.vy, sin, cos)
+        this.vx = rot1.x
+        this.vy = rot1.y
+
+        const rot2 = rotateClockwise(otherBall.vx, otherBall.vy, sin, cos)
+        otherBall.vx = rot2.x
+        otherBall.vy = rot2.y
+
+        this.vx -= vTranslation.vx
+        otherBall.vx -= vTranslation.vx
+        this.vy -= vTranslation.vy
+        otherBall.vy -= vTranslation.vy
     }
 }
