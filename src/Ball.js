@@ -130,22 +130,16 @@ export default class Ball {
         this.collideWith(otherBall, coefficientOfRestitution)
     }
 
-    /**
-     * If balls are overlapping  
-     * 1. Rewind to first contact
-     * 2. Collide according to coefficient of restitution
-     * 3. Fast-forward to now
-     */
     collideWith(otherBall, coefficientOfRestitution) {
         if (!this.isOverlapping(otherBall)) return
 
         const dt = this.getLastCollisionTimeWith(otherBall)
-        rewindToFirstContact([this, otherBall], dt)
+        rewindToFirstContact([this, otherBall])
         Ball.collide([this, otherBall], coefficientOfRestitution)
-        fastForwardToNow([this, otherBall], dt)
+        fastForwardToNow([this, otherBall])
 
-        function rewindToFirstContact(balls, dt) { balls.forEach(ball => ball.move(dt)) }
-        function fastForwardToNow(balls, dt) { balls.forEach(ball => ball.move(-dt)) }
+        function rewindToFirstContact(balls) { balls.forEach(ball => ball.move(dt)) }
+        function fastForwardToNow(balls) { balls.forEach(ball => ball.move(-dt)) }
     }
 
     /** 
@@ -164,9 +158,9 @@ export default class Ball {
         const v2NormalFraction = (dx * ball2.vx + dy * ball2.vy) / distanceSquared
         const v2Normal = { vx: v2NormalFraction * dx, vy: v2NormalFraction * dy }
 
-        const c = m1 * m2 / (m1 + m2) * (1 + coefficientOfRestitution)
-        const normalImpulseX = c * (v2Normal.vx - v1Normal.vx)
-        const normalImpulseY = c * (v2Normal.vy - v1Normal.vy)
+        const normalImpulseFraction = m1 * m2 / (m1 + m2) * (1 + coefficientOfRestitution)
+        const normalImpulseX = normalImpulseFraction * (v2Normal.vx - v1Normal.vx)
+        const normalImpulseY = normalImpulseFraction * (v2Normal.vy - v1Normal.vy)
 
         ball1.vx += normalImpulseX / m1
         ball1.vy += normalImpulseY / m1
