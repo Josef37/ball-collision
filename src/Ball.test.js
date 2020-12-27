@@ -241,20 +241,27 @@ describe("Ball", () => {
             expect(ball2.vy).to.equal(2)
         })
 
-        it("preserves kinetic energy", () => {
-            const numberOfTests = 10
+        it("works for non-center collisions", () => {
+            const ball1 = new Ball({ vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 1.2, y: 1.6, radius: 1 })
+            ball1._collideWith(ball2)
+            expect(ball2.vy / ball2.vx).to.be.closeTo(ball2.y / ball2.x, roundingError, "ball2 direction")
+            expect(ball1.vy / ball1.vx).to.be.closeTo(- ball2.x / ball2.y, roundingError, "ball1 direction")
+        })
+
+        it.only("preserves kinetic energy", () => {
+            const numberOfTests = 1
             const random = (n = 5) => 2 * n * Math.random() - n
-            for (const _ of Array(numberOfTests).fill()) {
-                const ball1 = new Ball({ vy: random(), vy: random() })
+            for (const _ of Array(numberOfTests)) {
+                const ball1 = new Ball({ vx: random(), vy: random() })
                 const x = random(2)
                 const y = Math.sqrt(2 ** 2 - x ** 2)
-                const ball2 = new Ball({ x, y, vy: random(), vy: random() })
+                const ball2 = new Ball({ x, y, vx: random(), vy: random() })
                 const kineticEnergyBefore = ball1.kineticEnergy + ball2.kineticEnergy
                 ball1._collideWith(ball2)
                 const kineticEnergyAfter = ball1.kineticEnergy + ball2.kineticEnergy
                 expect(kineticEnergyBefore).to.be.closeTo(kineticEnergyAfter, roundingError)
             }
-
         })
     })
 

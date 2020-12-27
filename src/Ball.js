@@ -140,14 +140,14 @@ export default class Ball {
         const sin = Math.sin(angle)
         const cos = Math.cos(angle)
 
-        this.vx = rotateCounterClockwise(this.vx, this.vy, sin, cos).x
+        this.vx = rotateClockwise(this.vx, this.vy, sin, cos).x
         this.vy = 0
 
         const { dx, dy } = this.getVectorTo(otherBall)
 
         // 3. Compute new velocities according to elastic collision
         const v1x = this.vx
-        const { x: px, y: py } = rotateCounterClockwise(dx, dy, sin, cos)
+        const { x: px, y: py } = rotateClockwise(dx, dy, sin, cos)
         const m1 = this.mass
         const m2 = otherBall.mass
 
@@ -163,11 +163,11 @@ export default class Ball {
         otherBall.vy = v2y_
 
         // 4. Undo transformations form before
-        const rot1 = rotateClockwise(this.vx, this.vy, sin, cos)
+        const rot1 = rotateCounterClockwise(this.vx, this.vy, sin, cos)
         this.vx = rot1.x
         this.vy = rot1.y
 
-        const rot2 = rotateClockwise(otherBall.vx, otherBall.vy, sin, cos)
+        const rot2 = rotateCounterClockwise(otherBall.vx, otherBall.vy, sin, cos)
         otherBall.vx = rot2.x
         otherBall.vy = rot2.y
 
