@@ -124,32 +124,97 @@ describe("Ball", () => {
         })
     })
 
-    describe("isColliding", () => {
+    describe("isOverlapping", () => {
         it("collides with itself", () => {
-            expect(ball.isColliding(ball)).to.be.true
+            expect(ball.isOverlapping(ball)).to.be.true
         })
 
         it("does not collide outside radius", () => {
-            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
-            const ball2 = constructBallAt({ x: 3, y: 0, radius: 1 })
-            expect(ball1.isColliding(ball2)).to.be.false
+            const ball1 = new Ball({ x: 0, y: 0, radius: 1 })
+            const ball2 = new Ball({ x: 3, y: 0, radius: 1 })
+            expect(ball1.isOverlapping(ball2)).to.be.false
         })
 
         it("does collide when touching slightly", () => {
-            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
-            const ball2 = constructBallAt({ x: 1.999, y: 0, radius: 1 })
-            expect(ball1.isColliding(ball2)).to.be.true
+            const ball1 = new Ball({ x: 0, y: 0, radius: 1 })
+            const ball2 = new Ball({ x: 1.999, y: 0, radius: 1 })
+            expect(ball1.isOverlapping(ball2)).to.be.true
         })
 
         it("does not collide when sperated slightly", () => {
-            const ball1 = constructBallAt({ x: 0, y: 0, radius: 1 })
-            const ball2 = constructBallAt({ x: 2.001, y: 0, radius: 1 })
-            expect(ball1.isColliding(ball2)).to.be.false
+            const ball1 = new Ball({ x: 0, y: 0, radius: 1 })
+            const ball2 = new Ball({ x: 2.001, y: 0, radius: 1 })
+            expect(ball1.isOverlapping(ball2)).to.be.false
+        })
+    })
+
+    describe("getLastCollisionWith", () => {
+        it("returns 0 for touching balls", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 2, vx: 0, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(0)
         })
 
-        function constructBallAt({ x, y, radius }) {
-            return new Ball({ x, y, vx: 0, vy: 0, radius })
-        }
+        it("finds last collision for movement in x-dimension with equal velocity", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(-0.5)
+        })
+
+        it("finds last collision for movement in x-dimension", () => {
+            const ball1 = new Ball({ x: 0, vx: 3, radius: 1 })
+            const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(-0.25)
+        })
+
+        it("finds last collision for movement in y-dimension", () => {
+            const ball1 = new Ball({ y: 0, vy: 3, radius: 1 })
+            const ball2 = new Ball({ y: 1, vy: -1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(-0.25)
+        })
+
+        it("finds last collision for movement in both dimensions", () => {
+            const ball1 = new Ball({ x: 0, y: 0, vx: 1, vy: 1, radius: 1 })
+            const ball2 = new Ball({ x: 1, y: 1, vx: -1, vy: -1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            const roundingError = 1e-8
+            expect(dt).to.be.closeTo(-0.207106781, roundingError)
+        })
+
+        it("even finds next collision, when balls are sperated and going to collide", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 3, vx: -1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(0.5)
+        })
+
+        it("picks last collision, when balls are seperated (and seperating)", () => {
+            const ball1 = new Ball({ x: 0, vx: -1, radius: 1 })
+            const ball2 = new Ball({ x: 3, vx: 1, radius: 1 })
+            const dt = ball1.getLastCollisionTimeWith(ball2)
+
+            expect(dt).to.equal(-0.5)
+        })
+    })
+
+    describe.only("collision (touching)", () => {
+        it("works for one-dimensional collision (equal velocity)", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: 2, vx: -1, radius: 1 })
+            ball1._collideWith(ball2)
+            expect(ball1.vx).to.equal(-1)
+            expect(ball2.vx).to.equal(1)
+        })
     })
 
     function expectBallPosition({ x, y }) {

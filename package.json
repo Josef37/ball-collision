@@ -9,7 +9,8 @@
     "test": "mocha -r esm ./src/**/*.test.js"
   },
   "dependencies": {
-    "chart.js": "^2.9.4"
+    "chart.js": "^2.9.4",
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "chai": "^4.2.0",
