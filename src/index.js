@@ -11,10 +11,10 @@ const randomColor = () => '#' + randomHue(128, 255) + randomHue(0) + randomHue(0
 const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
 const radiusFromMass = Math.sqrt
 
-const gravityAcceleration = 300 // in px/s^2
-const numberOfCollisionIterations = 5
+const gravityAcceleration = 200 // in px/s^2
+const numberOfCollisionIterations = 10
 const dt = 1 / 60 // in seconds
-const numberOfBalls = 100
+const numberOfBalls = 300
 const initialMaxVelocity = 500
 const coefficientOfRestitution = 0.9
 
@@ -57,8 +57,9 @@ function simulateCollisions() {
 function collideBalls() {
     iteratePairs(
         balls,
-        (ball1, ball2) =>
+        (ball1, ball2) => {
             ball1.collideWith(ball2, coefficientOfRestitution)
+        }
     )
 }
 

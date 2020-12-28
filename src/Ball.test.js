@@ -146,11 +146,11 @@ describe("Ball", () => {
         })
     })
 
-    describe("getLastCollisionWith", () => {
+    describe("getNearestContactTimeWith", () => {
         it("returns 0 for touching balls", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 2, vx: 0, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(0)
         })
@@ -158,7 +158,7 @@ describe("Ball", () => {
         it("finds last collision for movement in x-dimension with equal velocity", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(-0.5)
         })
@@ -166,7 +166,7 @@ describe("Ball", () => {
         it("finds last collision for movement in x-dimension", () => {
             const ball1 = new Ball({ x: 0, vx: 3, radius: 1 })
             const ball2 = new Ball({ x: 1, vx: -1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(-0.25)
         })
@@ -174,7 +174,7 @@ describe("Ball", () => {
         it("finds last collision for movement in y-dimension", () => {
             const ball1 = new Ball({ y: 0, vy: 3, radius: 1 })
             const ball2 = new Ball({ y: 1, vy: -1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(-0.25)
         })
@@ -182,7 +182,7 @@ describe("Ball", () => {
         it("finds last collision for movement in both dimensions", () => {
             const ball1 = new Ball({ x: 0, y: 0, vx: 1, vy: 1, radius: 1 })
             const ball2 = new Ball({ x: 1, y: 1, vx: -1, vy: -1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.be.closeTo(-0.207106781, roundingError)
         })
@@ -190,7 +190,7 @@ describe("Ball", () => {
         it("even finds next collision, when balls are sperated and going to collide", () => {
             const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
             const ball2 = new Ball({ x: 3, vx: -1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(0.5)
         })
@@ -198,9 +198,17 @@ describe("Ball", () => {
         it("picks last collision, when balls are seperated (and seperating)", () => {
             const ball1 = new Ball({ x: 0, vx: -1, radius: 1 })
             const ball2 = new Ball({ x: 3, vx: 1, radius: 1 })
-            const dt = ball1.getLastCollisionTimeWith(ball2)
+            const dt = ball1.getNearestContactTimeWith(ball2)
 
             expect(dt).to.equal(-0.5)
+        })
+
+        it("picks upcoming touch, when upcoming touch is nearer", () => {
+            const ball1 = new Ball({ x: 0, vx: 1, radius: 1 })
+            const ball2 = new Ball({ x: -0.5, vx: 0, radius: 1 })
+            const dt = ball1.getNearestContactTimeWith(ball2)
+
+            expect(dt).to.equal(1.5)
         })
     })
 

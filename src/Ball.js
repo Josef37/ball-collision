@@ -105,19 +105,27 @@ export default class Ball {
         }
     }
 
-    getLastCollisionTimeWith(otherBall) {
+    getNearestContactTimeWith(otherBall) {
+        const collisionTimes = this.getContactTimesWith(otherBall)
+        return _.minBy(collisionTimes, Math.abs)
+    }
+
+    getContactTimesWith(otherBall) {
         const { dx, dy } = this.getVectorTo(otherBall)
         const { dvx, dvy } = this.getVelocityDifferenceTo(otherBall)
-        const touchingDistance = this.radius + otherBall.radius
+        const touchingDistanceSquared = (this.radius + otherBall.radius) ** 2
 
-        // Solve quadratic equation
-        const a = dvx ** 2 + dvy ** 2
-        const b = 2 * (dvx * dx + dvy * dy)
-        const c = dx ** 2 + dy ** 2 - touchingDistance ** 2
-        const detSqrt = Math.sqrt(b ** 2 - 4 * a * c)
-        const solutions = [(-b - detSqrt) / (2 * a), (-b + detSqrt) / (2 * a)]
-        const dt = _.minBy(solutions, Math.abs)
-        return dt
+        const relativeVelocitySquared = dvx ** 2 + dvy ** 2
+        const distanceSquared = dx ** 2 + dy ** 2
+        const velocityScalarDistance = dvx * dx + dvy * dy
+
+        // Solve quadratic equation derived from `|dt*ΔV + ΔP| = r1+r2`
+        const a = relativeVelocitySquared
+        const b = 2 * velocityScalarDistance
+        const c = distanceSquared - touchingDistanceSquared
+        const determinantSqrt = Math.sqrt(b ** 2 - 4 * a * c)
+        const collisionTimes = [(-b - determinantSqrt) / (2 * a), (-b + determinantSqrt) / (2 * a)]
+        return collisionTimes
     }
 
     collideElasticWith(otherBall) {
@@ -130,16 +138,22 @@ export default class Ball {
         this.collideWith(otherBall, coefficientOfRestitution)
     }
 
+    /**
+     * We chose not to rewind to the last contact time, 
+     * since we're simulating multiple collisions after another per frame.  
+     * Therefore the velocity vector could have turned around,
+     * which would set the last collision into the future.
+     */
     collideWith(otherBall, coefficientOfRestitution) {
         if (!this.isOverlapping(otherBall)) return
 
-        const dt = this.getLastCollisionTimeWith(otherBall)
-        rewindToFirstContact([this, otherBall])
+        const dt = this.getNearestContactTimeWith(otherBall)
+        moveToNearestContact([this, otherBall])
         Ball.collide([this, otherBall], coefficientOfRestitution)
-        fastForwardToNow([this, otherBall])
+        moveBackToCurrentMoment([this, otherBall])
 
-        function rewindToFirstContact(balls) { balls.forEach(ball => ball.move(dt)) }
-        function fastForwardToNow(balls) { balls.forEach(ball => ball.move(-dt)) }
+        function moveToNearestContact(balls) { balls.forEach(ball => ball.move(dt)) }
+        function moveBackToCurrentMoment(balls) { balls.forEach(ball => ball.move(-dt)) }
     }
 
     /** 
