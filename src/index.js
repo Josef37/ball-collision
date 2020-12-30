@@ -12,11 +12,11 @@ const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
 const radiusFromMass = Math.sqrt
 
 const gravityAcceleration = 200 // in px/s^2
-const numberOfCollisionIterations = 10
+const numberOfCollisionIterations = 1
 const dt = 1 / 60 // in seconds
-const numberOfBalls = 300
+const numberOfBalls = 50
 const initialMaxVelocity = 500
-const coefficientOfRestitution = 0.9
+const coefficientOfRestitution = 1
 
 function updateFrame(ts) {
     clearCanvas()
@@ -58,9 +58,12 @@ function collideBalls() {
     iteratePairs(
         balls,
         (ball1, ball2) => {
-            ball1.collideWith(ball2, coefficientOfRestitution)
+            ball1.recordCollision(ball2, coefficientOfRestitution)
         }
     )
+    for (const ball of balls) {
+        ball.applyCollisions()
+    }
 }
 
 function collideWithWalls() {

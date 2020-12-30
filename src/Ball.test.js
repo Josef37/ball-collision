@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import _ from "lodash"
 import Ball from "./Ball"
+import { iteratePairs } from "./utils";
 
 const roundingError = 1e-8
 
@@ -346,6 +347,94 @@ describe("Ball", () => {
                 ball1.collideWith(ball2, coefficientOfRestitution)
                 return ball1.kineticEnergy + ball2.kineticEnergy
             }
+        })
+    })
+
+    describe("record all collisions before updating", () => {
+        it("records two collisions before updating", () => {
+            const centerBall = new Ball({ y: roundingError })
+            const ball1 = new Ball({ x: Math.SQRT2, y: Math.SQRT2, vx: -1, vy: -1 })
+            const ball2 = new Ball({ x: -Math.SQRT2, y: Math.SQRT2, vx: 1, vy: -1 })
+
+            centerBall.recordCollision(ball1)
+            centerBall.recordCollision(ball2)
+            centerBall.applyCollisions()
+
+            expect(centerBall.vx).to.equal(0)
+            expect(centerBall.vy).to.be.closeTo(-2, roundingError)
+        })
+
+        it("reverts to contact for overlapping collisions", () => {
+            const centerBall = new Ball({})
+            const ball1 = new Ball({ x: Math.SQRT2 - 1, y: Math.SQRT2, vx: -1 })
+            const ball2 = new Ball({ x: -(Math.SQRT2 - 1), y: Math.SQRT2, vx: 1 })
+
+            centerBall.recordCollision(ball1)
+            centerBall.recordCollision(ball2)
+            centerBall.applyCollisions()
+
+            expect(centerBall.vx).to.equal(0)
+            expect(centerBall.vy).to.equal(-0.5)
+            expect(centerBall.x).to.equal(0)
+            expect(centerBall.y).to.be.closeTo(-0.5, roundingError)
+        })
+
+        it("averages positions for multiple collisions", () => {
+            const centerBall = new Ball({})
+            const ball1 = new Ball({ x: 1, vx: -1 })
+            const ball2 = new Ball({ x: -1, vx: 1 })
+
+            centerBall.recordCollision(ball1)
+            centerBall.recordCollision(ball2)
+            centerBall.applyCollisions()
+
+            expect(centerBall.vx).to.equal(0)
+            expect(centerBall.vy).to.equal(0)
+            expect(centerBall.x).to.equal(0)
+            expect(centerBall.y).to.equal(0)
+        })
+
+        it("records collisions for collision partner", () => {
+            const ball1 = new Ball({ x: 0.5, vx: -1 })
+            const ball2 = new Ball({ x: -0.5, vx: 1 })
+
+            ball1.recordCollision(ball2)
+            ball1.applyCollisions()
+            ball2.applyCollisions()
+
+            expect(ball1.vx).to.equal(1)
+            expect(ball2.vx).to.equal(-1)
+            expect(ball1.x).to.equal(1.5)
+            expect(ball2.x).to.equal(-1.5)
+        })
+
+        it("does not change the balls state", () => {
+            const initialState = { x: 0.5, y: 0, vx: -1, vy: 0 }
+            const ball1 = new Ball(initialState)
+            const ball2 = new Ball({ x: -0.5, vx: 1 })
+
+            ball1.recordCollision(ball2)
+
+            expect(ball1).to.contain(initialState)
+        })
+
+        it.only("preserves kinetic energy", () => {
+            const balls = [
+                new Ball({ y: 0, vy: 1 }),
+                new Ball({ x: 0, y: 2 }),
+                new Ball({ x: Math.sqrt(3), y: 1 }),
+                new Ball({ x: -Math.sqrt(3), y: 1 })
+            ]
+
+            const kineticEnergyBefore = _.sum(balls.map(ball => ball.kineticEnergy))
+
+            iteratePairs(balls, (ball1, ball2) => ball1.recordCollision(ball2))
+            console.log(JSON.stringify(balls, null, 4))
+            balls.forEach(ball => ball.applyCollisions())
+
+            const kineticEnergyAfter = _.sum(balls.map(ball => ball.kineticEnergy))
+            console.log(balls)
+            expect(kineticEnergyBefore).to.equal(kineticEnergyAfter)
         })
     })
 
