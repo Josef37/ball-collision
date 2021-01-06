@@ -5,6 +5,21 @@ export default class BallCollision {
         Object.assign(this, { ball1, ball2, coefficientOfRestitution })
     }
 
+    /**
+     * We chose not to rewind to the last contact time, 
+     * since we're simulating multiple collisions after another per frame.  
+     * Therefore the velocity vector could have turned around,
+     * which would set the last collision into the future.
+     */
+    collide() {
+        if (!this.isCollision()) return
+
+        const dt = this.getNearestContactTime()
+        this.moveBallsByTime(dt)
+        this._collide()
+        this.moveBallsByTime(-dt)
+    }
+
     isCollision() {
         const { dx, dy } = this.ball1.getVectorTo(this.ball2)
         const distanceSquared = dx * dx + dy * dy
@@ -36,21 +51,6 @@ export default class BallCollision {
             (-b + determinantSqrt) / (2 * a)
         ].filter(isFinite)
         return collisionTimes
-    }
-
-    /**
-     * We chose not to rewind to the last contact time, 
-     * since we're simulating multiple collisions after another per frame.  
-     * Therefore the velocity vector could have turned around,
-     * which would set the last collision into the future.
-     */
-    collide() {
-        if (!this.isCollision()) return
-
-        const dt = this.getNearestContactTime()
-        this.moveBallsByTime(dt)
-        this._collide()
-        this.moveBallsByTime(-dt)
     }
 
     moveBallsByTime(dt) {

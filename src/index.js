@@ -1,14 +1,9 @@
 import "./styles.css"
 import _ from "lodash"
-import { iteratePairs } from "./utils"
+import { iteratePairs, randomFloat, randomColor } from "./utils"
 import { updateChart } from "./chart"
 import Ball from "./Ball"
 import BallCollision from "./BallCollision"
-
-/** @todo export to utils */
-const randomFloat = (...args) => _.random(...args, true)
-const randomHue = (...randomArgs) => _.random(...randomArgs).toString(16).padStart(2, 0)
-const randomColor = () => '#' + randomHue(128, 255) + randomHue(0) + randomHue(0, 64)
 
 /** @todo make these a option (constructor) */
 const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
@@ -122,7 +117,7 @@ function createBalls() {
             vy: randomFloat(-initialMaxVelocity, initialMaxVelocity),
             radius: radiusFromMass(mass),
             mass,
-            color: randomColor()
+            color: randomColor({ r: [128, 255], g: [0, 0], b: [0, 64] }),
         })
     })
 }

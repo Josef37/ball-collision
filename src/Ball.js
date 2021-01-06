@@ -3,7 +3,6 @@ import { rotate } from "./utils"
 
 /**
  * @todo add math.js for vector computation (position, velocity, rotation)
- * @todo reorder top to bottom
  */
 export default class Ball {
     constructor({ x = 0, y = 0, vx = 0, vy = 0, radius = 1, mass = 1, color = "red" }) {
