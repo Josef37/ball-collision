@@ -6,7 +6,8 @@
   "scripts": {
     "start": "parcel index.html --open",
     "build": "parcel build index.html",
-    "test": "mocha -r esm ./src/**/*.test.js"
+    "test": "mocha -r esm ./src/**/*.test.js",
+    "lint": "standard"
   },
   "dependencies": {
     "chart.js": "^2.9.4",
@@ -17,6 +18,15 @@
     "esm": "^3.2.25",
     "mocha": "^8.2.1",
     "parcel-bundler": "^1.6.1",
-    "sinon": "^9.2.2"
+    "sinon": "^9.2.2",
+    "standard": "^16.0.3"
+  },
+  "standard": {
+    "globals": [
+      "describe",
+      "it",
+      "beforeEach",
+      "afterEach"
+    ]
   }
 }
