@@ -3,21 +3,29 @@ import _ from "lodash"
 import { iteratePairs } from "./utils"
 import { updateChart } from "./chart"
 import Ball from "./Ball"
+import BallCollision from "./BallCollision"
 
+/** @todo export to utils */
 const randomFloat = (...args) => _.random(...args, true)
 const randomHue = (...randomArgs) => _.random(...randomArgs).toString(16).padStart(2, 0)
 const randomColor = () => '#' + randomHue(128, 255) + randomHue(0) + randomHue(0, 64)
 
+/** @todo make these a option (constructor) */
 const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
 const radiusFromMass = Math.sqrt
 
 const gravityAcceleration = 200 // in px/s^2
 const numberOfCollisionIterations = 10
 const dt = 1 / 60 // in seconds
-const numberOfBalls = 300
+const numberOfBalls = 50
 const initialMaxVelocity = 500
-const coefficientOfRestitution = 0.9
+const coefficientOfRestitution = 0.8
 
+/** 
+ * @todo Uses the same options, could be a class like `Game`
+ * @todo Maybe split rendering and computing things (aka MVC)
+ * @todo Walls could be just another object with infinite mass
+ */
 function updateFrame(ts) {
     clearCanvas()
 
@@ -55,12 +63,10 @@ function simulateCollisions() {
 }
 
 function collideBalls() {
-    iteratePairs(
-        balls,
-        (ball1, ball2) => {
-            ball1.collideWith(ball2, coefficientOfRestitution)
-        }
-    )
+    iteratePairs(balls, (ball1, ball2) => {
+        const collision = new BallCollision([ball1, ball2], coefficientOfRestitution)
+        collision.collide()
+    })
 }
 
 function collideWithWalls() {
