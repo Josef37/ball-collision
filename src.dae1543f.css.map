@@ -1,0 +1,1 @@
+{"version":3,"sources":["styles.css"],"names":[],"mappings":"AAAA,KACI,eACJ,CAEA,EACE,QAAS,CACT,SACF,CAEA,YACE,cAAe,CACf,KAAM,CACN,OACF","file":"src.dae1543f.css","sourceRoot":"..","sourcesContent":["body {\n    overflow: hidden;\n}\n\n* {\n  margin: 0;\n  padding: 0;\n}\n  \n#info-panel {\n  position: fixed;\n  top: 0;\n  right: 0;\n}"]}
