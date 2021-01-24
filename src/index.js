@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { iteratePairs, randomFloat, randomColor } from './utils'
 import { updateChart } from './chart'
 import Ball from './Ball'
-import BallCollision from './BallCollision'
+import BallCollision from './collideBalls'
 
 /** @todo make these a option (constructor) */
 const randomMass = () => Math.exp(randomFloat(0, 3)) * 50
@@ -12,7 +12,7 @@ const radiusFromMass = Math.sqrt
 const gravityAcceleration = 200 // in px/s^2
 const numberOfCollisionIterations = 10
 const dt = 1 / 60 // in seconds
-const numberOfBalls = 50
+const numberOfBalls = 100
 const initialMaxVelocity = 500
 const coefficientOfRestitution = 0.8
 
@@ -59,8 +59,7 @@ function simulateCollisions () {
 
 function collideBalls () {
   iteratePairs(balls, (ball1, ball2) => {
-    const collision = new BallCollision([ball1, ball2], coefficientOfRestitution)
-    collision.collide()
+    BallCollision([ball1, ball2], coefficientOfRestitution)
   })
 }
 
