@@ -1,1 +1,0 @@
-{"version":3,"sources":["src/styles.css"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA","file":"src.a2b27638.css","sourceRoot":"..","sourcesContent":["body {\n    overflow: hidden;\n}\n\n* {\n  margin: 0;\n  padding: 0;\n}\n  \n#info-panel {\n  position: fixed;\n  top: 0;\n  right: 0;\n}"]}
